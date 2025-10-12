@@ -4,6 +4,7 @@ import com.ninos.auth_users.entity.User;
 import com.ninos.enums.AccountStatus;
 import com.ninos.enums.AccountType;
 import com.ninos.enums.Currency;
+import com.ninos.transaction.entity.Transaction;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
