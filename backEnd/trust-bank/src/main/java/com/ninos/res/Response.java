@@ -1,9 +1,8 @@
-package com.ninos.response;
+package com.ninos.res;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
-
 import java.io.Serializable;
 import java.util.Map;
 
