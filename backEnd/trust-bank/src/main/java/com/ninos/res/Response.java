@@ -13,7 +13,7 @@ public class Response<T> {
 
     private int statusCode;
     private String message;
-    private T data; // T: is generic it could be(any DTO like: UserDTO, AccountDTO, LoginResponse,...)
+    private T data; // T: is generic it could be(String or any DTO like: UserDTO, AccountDTO, LoginResponse,...)
     private Map<String, Serializable> meta;
 
 }
