@@ -1,18 +1,21 @@
-package com.ninos.auth_users.service;
+package com.ninos.auth_users.service.impl;
 
 import com.ninos.account.entity.Account;
 import com.ninos.auth_users.dto.LoginRequest;
 import com.ninos.auth_users.dto.LoginResponse;
 import com.ninos.auth_users.dto.RegistrationRequest;
 import com.ninos.auth_users.dto.ResetPasswordRequest;
+import com.ninos.auth_users.entity.PasswordResetCode;
 import com.ninos.auth_users.entity.User;
+import com.ninos.auth_users.repository.PasswordResetCodeRepository;
 import com.ninos.auth_users.repository.UserRepository;
+import com.ninos.auth_users.service.AuthService;
+import com.ninos.auth_users.service.CodeGenerator;
 import com.ninos.enums.AccountType;
 import com.ninos.enums.Currency;
 import com.ninos.exceptions.BadRequestException;
 import com.ninos.exceptions.NotFoundException;
 import com.ninos.notification.dto.NotificationDTO;
-import com.ninos.notification.entity.Notification;
 import com.ninos.notification.service.NotificationService;
 import com.ninos.res.Response;
 import com.ninos.role.entity.Role;
@@ -20,16 +23,22 @@ import com.ninos.role.repository.RoleRepository;
 import com.ninos.security.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements AuthService{
+public class AuthServiceImpl implements AuthService {
+
+    @Value("${password.reset.link}")
+    private String resetLink;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -37,6 +46,8 @@ public class AuthServiceImpl implements AuthService{
     private final TokenService tokenService;
     private final NotificationService notificationService;
 
+    private final CodeGenerator codeGenerator;
+    private final PasswordResetCodeRepository passwordResetCodeRepository;
 
 
     @Transactional
@@ -74,7 +85,7 @@ public class AuthServiceImpl implements AuthService{
         User savedUser = userRepository.save(user);
 
         // TODO AUTO GENERATE AN ACCOUNT NUMBER FOR THE USER
-        Account savedAccount = accountService.createAccount(AccountType.CHECKING, savedUser);
+//        Account savedAccount = accountService.createAccount(AccountType.CHECKING, savedUser);
 
         // SEND WELCOME EMAIL
         Map<String, Object> vars = new HashMap<>();
@@ -92,7 +103,7 @@ public class AuthServiceImpl implements AuthService{
         // SEND ACCOUNT CREATION/DETAILS EMAIL
         Map<String, Object> accountVars = new HashMap<>();
         accountVars.put("name", savedUser.getFirstName());
-        accountVars.put("accountNumber", savedAccount.getAccountNumber());
+//        accountVars.put("accountNumber", savedAccount.getAccountNumber());
         accountVars.put("accountType", AccountType.CHECKING.name());
         accountVars.put("currency", Currency.USD);
 
@@ -108,7 +119,7 @@ public class AuthServiceImpl implements AuthService{
         return Response.<String>builder()
                 .statusCode(HttpStatus.CREATED.value())
                 .message("Your account has been created successfully")
-                .data("Email of your account details has been sent to you, Your account number is: " + savedAccount.getAccountNumber())
+//                .data("Email of your account details has been sent to you, Your account number is: " + savedAccount.getAccountNumber())
                 .build();
     }
 
@@ -139,16 +150,92 @@ public class AuthServiceImpl implements AuthService{
     }
 
 
-
+    @Transactional
     @Override
     public Response<?> forgetPassword(String email) {
-        return null;
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("Email Not Found"));
+
+        passwordResetCodeRepository.deleteByUserId(user.getId()); // delete all the codes that user have it
+
+        String code = codeGenerator.generateUniqueCode();
+
+        PasswordResetCode resetCode = PasswordResetCode.builder()
+                .user(user)
+                .code(code)
+                .expiryDate(calculateExpiryDate())
+                .used(false)
+                .build();
+
+        passwordResetCodeRepository.save(resetCode);
+
+        // send email reset link out
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("name", user.getFirstName());
+        templateVariables.put("resetLink", resetLink + code);
+
+        NotificationDTO notificationDTO = NotificationDTO.builder()
+                .recipient(user.getEmail())
+                .subject("Password Reset Code")
+                .templateName("password-reset")
+                .templateVariables(templateVariables)
+                .build();
+
+        notificationService.sendEmail(notificationDTO,user);
+
+        return Response.builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Password reset code sent to your email")
+                .build();
     }
 
 
-
+    @Transactional
     @Override
     public Response<?> updatePasswordViaResetCode(ResetPasswordRequest resetPasswordRequest) {
-        return null;
+        String code = resetPasswordRequest.getCode();
+        String newPassword = resetPasswordRequest.getNewPassword();
+
+        // Find and validate code
+        PasswordResetCode resetCode = passwordResetCodeRepository.findByCode(code)
+                .orElseThrow(() -> new BadRequestException("Invalid reset code"));
+
+        // check expiration
+        if(resetCode.getExpiryDate().isBefore(LocalDateTime.now())){
+            passwordResetCodeRepository.delete(resetCode); // clean up expired code
+            throw new BadRequestException("Rest code has expired");
+        }
+
+        // Update user password
+        User user = resetCode.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Delete the code immediately after successful use
+        passwordResetCodeRepository.delete(resetCode);
+
+        // Send confirmation email
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("name", user.getFirstName());
+
+        NotificationDTO notificationDTO = NotificationDTO.builder()
+                .recipient(user.getEmail())
+                .subject("Password Updated Successfully")
+                .templateName("password-update-confirmation")
+                .templateVariables(templateVariables)
+                .build();
+
+        notificationService.sendEmail(notificationDTO,user);
+
+        return Response.builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Password Updated Successfully")
+                .build();
     }
+
+
+    private LocalDateTime calculateExpiryDate() {
+        return LocalDateTime.now().plusHours(5); // expired after 5 hours(if you don't use a code within 5 hours it will be expired)
+    }
+
 }

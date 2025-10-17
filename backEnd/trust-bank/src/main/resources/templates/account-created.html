@@ -51,23 +51,25 @@
             margin-top: 20px;
         }
 
-        li {
-            background: #f9fbe7;
-            border: 1px solid #c5e1a5;
-            margin: 8px 0;
-            padding: 12px 15px;
-            border-radius: 10px;
-            font-size: 15px;
-            color: #2e7d32;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+     li {
+    background: #f9fbe7;
+    border: 1px solid #c5e1a5;
+    margin: 8px 0;
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #2e7d32;
+    display: flex;
+    align-items: center;
+}
 
-        li b {
-            color: #1b5e20;
-        }
+       li span {
+    margin-right: 8px; /* 👈 this creates the visual space */
+}
 
+li b {
+    color: #1b5e20;
+}
         /* ---------- Button ---------- */
         .btn {
             display: block;
@@ -107,14 +109,20 @@
 </head>
 <body>
 <div class="container">
-    <h2>Hello, <span th:text="${name}">Customer</span> 👋</h2>
-    <p>Your <b><span th:text="${accountType}">Checking</span></b> account has been successfully created 🎉</p>
+    <h2>Hello, <span th:text="${name}"></span> 👋</h2>
+    <p>Your <b><span th:text="${accountType}"></span></b> account has been successfully created 🎉</p>
 
     <p><b>Account Details:</b></p>
+<!--    <ul>-->
+<!--        <li>Account Number: <b th:text="${accountNumber}"></b></li>-->
+<!--        <li>Account Type: <b th:text="${accountType}"></b></li> -->
+<!--        <li>Account Type: <b th:text="${accountType}"></b></li> -->
+<!--        <li>Currency: <b th:text="${currency}"></b></li>-->
+<!--    </ul>-->
     <ul>
-        <li>Account Number: <b th:text="${accountNumber}">123456789</b></li>
-        <li>Account Type: <b th:text="${accountType}">Savings</b></li>
-        <li>Currency: <b th:text="${currency}">USD</b></li>
+        <li><span>Account Number:</span> <b th:text="${accountNumber}"></b></li>
+        <li><span>Account Type:</span> <b th:text="${accountType}"></b></li>
+        <li><span>Currency:</span> <b th:text="${currency}"></b></li>
     </ul>
 
     <a href="#" class="btn">Access Your Account</a>
