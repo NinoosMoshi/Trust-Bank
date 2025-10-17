@@ -8,7 +8,10 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ResetPasswordRequest {
 
-    private String email; // will be used to request for forgot password
-    private String code; // will be used to set new password
+    // will be used to request for forgot password
+    private String email;
+
+    // will be used to set new password
+    private String code;
     private String newPassword;
 }
