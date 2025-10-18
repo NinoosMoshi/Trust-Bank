@@ -22,9 +22,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -35,6 +40,8 @@ public class UserServiceImpl implements UserService {
     private final NotificationService notificationService;
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
+
+    private final String uploadDir = "uploads/profile-pictures/";
 
 
     @Override
@@ -119,6 +126,52 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Response<?> uploadProfilePicture(MultipartFile file) {
-        return null;
+        User user = getCurrentLoggedInUser(); // John Doe with user ID 12
+
+        try {
+            Path uploadPath = Paths.get(uploadDir); // uploadPath → uploads/profile-pictures/
+
+            // If uploads/profile-pictures/ doesn’t exist, the system will make it
+            if(!Files.exists(uploadPath)){
+                Files.createDirectories(uploadPath); // uploads/profile-pictures/
+            }
+
+            // John previously had uploads/profile-pictures/old123.jpg
+            if(user.getProfilePictureUrl() != null && !user.getProfilePictureUrl().isEmpty()){
+                Path oldFile = Paths.get(user.getProfilePictureUrl());
+                if(Files.exists(oldFile)){
+                    Files.delete(oldFile); // That file will be deleted before saving the new one.
+                }
+            }
+
+            // Generate a unique file name to avoid conflicts
+            String originalFileName = file.getOriginalFilename(); // myphoto.jpg
+
+            String fileExtension="";
+            if(originalFileName != null && originalFileName.contains(".")){
+                fileExtension = originalFileName.substring(originalFileName.lastIndexOf(".")); // If original file = "myphoto.jpg", then fileExtension = ".jpg"
+            }
+            String newFileName = UUID.randomUUID() + fileExtension; // New file name could be: "a5f3c7d2-89c4-44cd-92ee-7ff8d49b6bcd.jpg"
+
+           // Combines the directory path with the new file name to get the full path to where the file will be stored.
+            Path filePath = uploadPath.resolve(newFileName); // filePath = uploads/profile-pictures/a5f3c7d2-89c4-44cd-92ee-7ff8d49b6bcd.jpg
+
+            Files.copy(file.getInputStream(), filePath); // The user’s photo bytes are saved to uploads/profile-pictures/...jpg
+
+            String fileUrl = uploadDir + newFileName; // fileUrl = "uploads/profile-pictures/a5f3c7d2-89c4-44cd-92ee-7ff8d49b6bcd.jpg"
+
+            user.setProfilePictureUrl(fileUrl);
+            userRepository.save(user);
+
+            return Response.builder()
+                    .statusCode(HttpStatus.OK.value())
+                    .message("Profile picture uploaded Successfully")
+                    .data(fileUrl)
+                    .build();
+
+        }catch (IOException e){
+            throw new RuntimeException(e.getMessage());
+        }
+
     }
 }
