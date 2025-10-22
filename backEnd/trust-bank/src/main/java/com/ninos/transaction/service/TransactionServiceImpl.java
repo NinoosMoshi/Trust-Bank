@@ -6,11 +6,11 @@ import com.ninos.auth_users.entity.User;
 import com.ninos.auth_users.service.UserService;
 import com.ninos.enums.TransactionStatus;
 import com.ninos.enums.TransactionType;
+import com.ninos.exceptions.BadRequestException;
 import com.ninos.exceptions.InsufficientBalanceException;
 import com.ninos.exceptions.InvalidTransactionException;
 import com.ninos.exceptions.NotFoundException;
 import com.ninos.notification.dto.NotificationDTO;
-import com.ninos.notification.entity.Notification;
 import com.ninos.notification.service.NotificationService;
 import com.ninos.res.Response;
 import com.ninos.transaction.dto.TransactionDTO;
@@ -20,6 +20,10 @@ import com.ninos.transaction.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,7 +80,38 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     @Override
     public Response<List<TransactionDTO>> getTransactionsForMyAccount(String accountNumber, int page, int size) {
-        return null;
+
+        // get current login user
+        User user = userService.getCurrentLoggedInUser();
+
+        // Find the account by its number
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new NotFoundException("Account Not Found"));
+
+        // make sure account belong to the user
+        if(!account.getUser().getId().equals(user.getId())){
+            throw new BadRequestException("Account does not belong to the authenticated user");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("transactionDate").descending());
+        Page<Transaction> transactionPage = transactionRepository.findByAccount_AccountNumber(accountNumber, pageable);
+
+        List<TransactionDTO> transactionDTOS = transactionPage.getContent().stream()
+                .map(transaction -> modelMapper.map(transaction, TransactionDTO.class))
+                .toList();
+
+        return Response.<List<TransactionDTO>>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Transactions retrieved")
+                .data(transactionDTOS)
+                .meta(Map.of(
+                        "currentPage",transactionPage.getNumber(),
+                        "totalItems",transactionPage.getTotalElements(),
+                        "totalPages",transactionPage.getTotalPages(),
+                        "pageSize",transactionPage.getSize()
+                ))
+                .build();
+
     }
 
 
