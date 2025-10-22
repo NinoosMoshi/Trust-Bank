@@ -83,7 +83,7 @@ public class AccountServiceImpl implements AccountService{
         if(!user.getAccounts().contains(account)){
             throw new NotFoundException("Account does not belong to you");
         }
-        if(account.getBalance().compareTo(BigDecimal.ZERO) > 0){
+        if(account.getBalance().compareTo(BigDecimal.ZERO) > 0){ // compareTo() => return (-1 less than) or (0 equal) or (1 greater than). BigDecimal.ZERO => 0.00
             throw new BadRequestException("Account balance must be zero before closing");
         }
         account.setStatus(AccountStatus.CLOSED);
