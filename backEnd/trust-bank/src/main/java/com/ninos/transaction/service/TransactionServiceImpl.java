@@ -162,7 +162,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         transaction.setAccount(sourceAccount);
         transaction.setSourceAccount(sourceAccount.getAccountNumber());
-        transaction.setSourceAccount(destenationAccount.getAccountNumber());
+        transaction.setDestinationAccount(destenationAccount.getAccountNumber());
     }
 
 
