@@ -27,6 +27,7 @@ public class AuditorController {
         return ResponseEntity.ok(auditorService.getSystemTotal());
     }
 
+
     @GetMapping("/users")
     public ResponseEntity<UserDTO> findUserByEmail(@RequestParam String email){
         Optional<UserDTO> userDTO = auditorService.findUserByEmail(email);
