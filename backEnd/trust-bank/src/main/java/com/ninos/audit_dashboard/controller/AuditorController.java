@@ -22,7 +22,7 @@ public class AuditorController {
 
     private final AuditorService auditorService;
 
-    @GetMapping("/total")
+    @GetMapping("/totals")
     public ResponseEntity<Map<String, Long>> getSystemTotals(){
         return ResponseEntity.ok(auditorService.getSystemTotal());
     }
