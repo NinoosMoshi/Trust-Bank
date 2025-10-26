@@ -32,22 +32,22 @@ export default function Navbar() {
                 <Link to={"/"} className="navbar-logo">Trust Bank</Link>
                 <ul className='navbar-menu'>
                     <li className='navbar-item'>
-                        <Link to={"/"} className="navbar-link">Home</Link>
+                        <Link to="/home" className="navbar-link">Home</Link>
                     </li>
                     {isAuthenticated ? (
                         <>
                             <li className='navbar-item'>
-                                <Link to={"/profile"} className="navbar-link">Profile</Link>
+                                <Link to="/profile" className="navbar-link">Profile</Link>
                             </li>
                             <li className='navbar-item'>
-                                <Link to={"/transfer"} className="navbar-link">Transfer</Link>
+                                <Link to="/transfer" className="navbar-link">Transfer</Link>
                             </li>
                             <li className='navbar-item'>
-                                <Link to={"/transactions"} className="navbar-link">Transactions</Link>
+                                <Link to="/transactions" className="navbar-link">Transactions</Link>
                             </li>
                             {(isAdmin || isAuditor) && (
                                 <li className='navbar-item'>
-                                    <Link to={"/auditor-dashboard"} className="navbar-link">Auditor Dashboard</Link>
+                                    <Link to="/auditor-dashboard" className="navbar-link">Auditor Dashboard</Link>
                                 </li>
                             )}
                             <li className='navbar-item'>
@@ -57,10 +57,10 @@ export default function Navbar() {
                     ) : (
                         <>
                             <li className='navbar-item'>
-                                <Link to={"/login"} className="navbar-link">Login</Link>
+                                <Link to="/login" className="navbar-link">Login</Link>
                             </li>
                             <li className='navbar-item'>
-                                <Link to={"/register"} className="navbar-link">Register</Link>
+                                <Link to="/register" className="navbar-link">Register</Link>
                             </li>
                         </>
                     )}
