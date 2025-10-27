@@ -1,7 +1,7 @@
 import api from "./api";
 
 const UserService = {
-    getProfile: () => api.get("/users/me"),
+    getMyProfile: () => api.get("/users/me"),
 
     updatePassword: (oldPassword, newPassword) =>
         api.put("/users/update-password", { oldPassword, newPassword }),
@@ -9,7 +9,7 @@ const UserService = {
     uploadProfilePicture: (file) => {
         const formData = new FormData();
         formData.append("file", file);
-        return api.post("/users/profile-picture", formData, {
+        return api.put("/users/profile-picture", formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
     },

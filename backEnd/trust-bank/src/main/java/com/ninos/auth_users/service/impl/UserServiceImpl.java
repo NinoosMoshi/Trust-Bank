@@ -41,7 +41,11 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
 
-    private final String uploadDir = "uploads/profile-pictures/";
+    // save images to backend folder
+//    private final String uploadDir = "uploads/profile-pictures/";
+
+    // save images to frontend folder
+    private final String uploadDir = "C:/Users/ninoo/OneDrive/Desktop/bank-app(springboot-react)/frontEnd/trust-bank-ui/public/profile-picture/";
 
 
     @Override
@@ -158,7 +162,8 @@ public class UserServiceImpl implements UserService {
 
             Files.copy(file.getInputStream(), filePath); // The user’s photo bytes are saved to uploads/profile-pictures/...jpg
 
-            String fileUrl = uploadDir + newFileName; // fileUrl = "uploads/profile-pictures/a5f3c7d2-89c4-44cd-92ee-7ff8d49b6bcd.jpg"
+//            String fileUrl = uploadDir + newFileName; // fileUrl = "uploads/profile-pictures/a5f3c7d2-89c4-44cd-92ee-7ff8d49b6bcd.jpg" (this for backend)
+            String fileUrl = "profile-picture/" + newFileName; // retrieved path for from frontend (this for frontend)
 
             user.setProfilePictureUrl(fileUrl);
             userRepository.save(user);
